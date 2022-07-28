@@ -1,0 +1,48 @@
+version: '3'
+#
+# TimescaleDB production installation
+#
+# - Assumes ZFS based Ubuntu 22.04 Linux
+#
+# - Uses passthrough filesystem for /data and /logs
+#
+services:
+
+  # Main database server for oracle and backend databases
+  # https://hub.docker.com/r/timescale/timescaledb
+  timescaledb-prod:
+    container_name: timescaledb-prod
+    image: timescale/timescaledb:2.7.2-pg14
+
+    # Assume firewalled + password POSTGRES_PASSWORD hardened
+    network_mode: host
+
+    # pq: could not resize shared memory segment. No space left on device
+    # https://stackoverflow.com/a/56754077/315168
+    shm_size: 1g
+
+    # https://github.com/timescale/timescaledb/issues/1669
+    # Also bump max connection from the default 100 to 512 as we use large PSQL connection pool
+    # Default max_pred_locks_per_transaction=64
+    # Make sure we do not have runaway queries by limiting the query time to 1h
+    command:
+      - -ctimescaledb.max_background_workers=256
+      - -cmax_parallel_workers=64
+      - -cmax_worker_processes=128
+      - -cmax_connections=1024
+      - -cmax_pred_locks_per_transaction=512
+      - -cstatement_timeout=90min
+      - -cmax_wal_size=4GB
+      - -cidle_in_transaction_session_timeout=3600000
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dex_ohlcv
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    ports:
+      - "5432:5432"
+    volumes:
+      - $PWD/data/:/var/lib/postgresql/data
+      - $PWD/logs/:/var/log/timescaledb
+    #profiles:
+    #  - production

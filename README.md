@@ -1,4 +1,4 @@
-# PostgreSQL + ZFS installation instructions
+# PostgreSQL (TimeScaleDB) + ZFS installation instructions
 
 These instructions are how to set up a large ZFS volume for PostgreSQL with compression.
 
@@ -164,6 +164,102 @@ zfs get all $POOL_NAME|grep compress
 large-storage-pool  compressratio         1.22x                  -
 large-storage-pool  compression           lz4                    local
 large-storage-pool  refcompressratio      1.00x                  -```
+```
+
+# Setting up PostgreSQL (TimescaleDB) using Docker
+
+## Install Docker
+
+[Install Docker](https://docs.docker.com/engine/install/ubuntu/)
+
+```shell
+apt install -y ca-certificates curl gnupg lsb-release
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
+
+## Setting up environment variables
+
+Create `~/secrets.env`:
+
+```shell
+nano ~/secrets.env
+```
+
+Add:
+
+```
+# For TimescaleDB processes
+export POSTGRES_PASSWORD="add password here"
+
+# For PSQL based CLI tools
+export PGPASSWORD=$POSTGRES_PASSWORD
+```
+
+## Sync compose to the server
+
+We assume `docker-compose.yml` is copied to `/large-storage-pool/timescaledb/`
+
+## PostgreSQL tuning options
+
+[PostgreSQL tuning options are in docker-compose.yml](docker-compose.yml).
+
+# Starting TimescaleDB
+
+Test launch:
+
+```shell
+cd /large-storage-pool/timescaledb
+source ~/secrets.env
+docker compose up
+```
+
+A successful launch should print:
+
+```
+timescaledb-prod  | 2022-07-28 15:24:20.828 UTC [27] LOG:  TimescaleDB background worker launcher connected to shared catalogs
+```
+
+Launch for real:
+
+```shell
+docker compose up -d
+```
+
+# Testing local PSQL connection to TimescaleDB Docker
+
+Install `psql`
+
+```
+apt install -y postgresql-client-common postgresql-client-14
+```
+
+Connect with `psql`:
+
+```shell
+# Reads password from PGPASSWORD
+source ~/secrets.env
+psql --host=localhost --username=postgres
+````
+
+Then display versions:
+
+```sql
+\dx
+```
+
+
+```
+                                      List of installed extensions
+    Name     | Version |   Schema   |                            Description
+-------------+---------+------------+-------------------------------------------------------------------
+ plpgsql     | 1.0     | pg_catalog | PL/pgSQL procedural language
+ timescaledb | 2.7.2   | public     | Enables scalable inserts and complex queries for time-series data
 ```
 
 # Sources
