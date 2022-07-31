@@ -6,6 +6,8 @@ version: '3'
 #
 # - Uses passthrough filesystem for /data and /logs
 #
+# - Assume 128GB RAM
+#
 services:
 
   # Main database server for oracle and backend databases
@@ -34,9 +36,14 @@ services:
       - -cstatement_timeout=90min
       - -cmax_wal_size=4GB
       - -cidle_in_transaction_session_timeout=3600000
-      - -cidle_in_transaction_session_timeout=3600000
+      # Because ZFS always writes full blocks, you can disable full page writes in PostgreSQL via full_page_writes = off setting
+      # https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-postgresql-full-page-writes
+      - -cfull_page_writes=off
       # Runs on ZFS so not needed
       - -csynchronous_commit=off
+      # Prefer ZFS ARC cache over shared_buffers
+      - https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-toast-compression
+      - -cshared_buffers=16G
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: dex_ohlcv

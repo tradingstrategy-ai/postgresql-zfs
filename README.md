@@ -276,7 +276,7 @@ Use [btop++](https://github.com/aristocratos/btop) for monitoring.
 
 # Sources
 
-- [Setting up ZFS on Ubuntu]()https://ubuntu.com/tutorials/setup-zfs-storage-pool#3-creating-a-zfs-pool
+- [Setting up ZFS on Ubuntu](https://ubuntu.com/tutorials/setup-zfs-storage-pool#3-creating-a-zfs-pool)
 - [Running PostgreSQL using ZFS and AWS EBS](https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#basic-zfs-setup)
 - [PostgreSQL + ZFS Best Practices and Standard Procedures](https://people.freebsd.org/~seanc/postgresql/scale15x-2017-postgresql_zfs_best_practices.pdf)
 - [Everything I've seen on optimizing Postgres on ZFS](https://vadosware.io/post/everything-ive-seen-on-optimizing-postgres-on-zfs-on-linux/)
@@ -285,3 +285,4 @@ Use [btop++](https://github.com/aristocratos/btop) for monitoring.
 - [Reddit discussion on txg_timeout](https://www.reddit.com/r/zfs/comments/rlfhxb/why_not_txg_timeout1/)
 - [ZFS lz4 vs. zstd](https://www.reddit.com/r/zfs/comments/orzpuy/zstd_vs_lz4_for_nvme_ssds/)
 - [ZFS and zstd compression speeds](https://www.reddit.com/r/zfs/comments/sxx9p7/a_simple_real_world_zfs_compression_speed_an/)
+- [PostgreSQL TOAST](https://www.gojek.io/blog/a-toast-from-postgresql)
