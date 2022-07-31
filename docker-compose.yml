@@ -27,14 +27,16 @@ services:
     # Make sure we do not have runaway queries by limiting the query time to 1h
     command:
       - -ctimescaledb.max_background_workers=256
-      - -cmax_parallel_workers=64
-      - -cmax_worker_processes=128
+      - -cmax_parallel_workers=128
+      - -cmax_worker_processes=256
       - -cmax_connections=1024
       - -cmax_pred_locks_per_transaction=512
       - -cstatement_timeout=90min
       - -cmax_wal_size=4GB
       - -cidle_in_transaction_session_timeout=3600000
-
+      - -cidle_in_transaction_session_timeout=3600000
+      # Runs on ZFS so not needed
+      - -csynchronous_commit=off
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: dex_ohlcv

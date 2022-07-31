@@ -10,6 +10,7 @@ These instructions are how to set up a large ZFS volume for PostgreSQL with comp
 
 - Get a server from Hetzner
 - Set up 1 root drive (512GB) + 4x 3.8TB storage drives 
+- Assume 64 core server
 - Install using `installimage` from Hetzner rescue system
 - Install Ubuntu 22.04
 - Format only root drive
@@ -106,15 +107,14 @@ config:
 
 Configure ZFS ([taken from here](https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#basic-zfs-setup))
 
+Important bit is enabling zfs compression (assume the server is not CPU limited)
+
 ```shell
 # same as default
 zfs set recordsize=128k $POOL_NAME
 
-# enable lz4 compression
-zfs set compression=lz4 $POOL_NAME
-
-# or zstd compression
-#zfs set compression=zstd-3 $POOL_NAME
+# zstd compression
+zfs set compression=zstd-3 $POOL_NAME
 
 # disable access time updates
 zfs set atime=off $POOL_NAME
@@ -128,7 +128,14 @@ zfs set logbias=latency $POOL_NAME
 # reduce amount of metadata (may improve random writes)
 zfs set redundant_metadata=most $POOL_NAME
 ```
-TODO: Add zfs_txg_timeout as a systemd service.
+
+Create a service [to tune ZFS TGX timeout](https://people.freebsd.org/~seanc/postgresql/scale15x-2017-postgresql_zfs_best_practices.pdf):
+
+```shell
+cp set-zfs-txg-timeout.service /etc/systemd/system/set-zfs-txg-timeout.service
+sudo systemctl enable set-zfs-txg-timeout.service
+sudo service set-zfs-txg-timeout start
+```
 
 Then create the mount point:
 
@@ -253,6 +260,7 @@ Then display versions:
 \dx
 ```
 
+Should print:
 
 ```
                                       List of installed extensions
@@ -261,6 +269,10 @@ Then display versions:
  plpgsql     | 1.0     | pg_catalog | PL/pgSQL procedural language
  timescaledb | 2.7.2   | public     | Enables scalable inserts and complex queries for time-series data
 ```
+
+# Other
+
+Use [btop++](https://github.com/aristocratos/btop) for monitoring.
 
 # Sources
 
@@ -271,3 +283,5 @@ Then display versions:
 - [HackerNews discussion](https://news.ycombinator.com/item?id=29647645)
 - [Setting zfs_txg_timeout on Ubuntu Linux](https://www.reddit.com/r/zfs/comments/mgibzy/comment/gsuzmxi/?utm_source=share&utm_medium=web2x&context=3)
 - [Reddit discussion on txg_timeout](https://www.reddit.com/r/zfs/comments/rlfhxb/why_not_txg_timeout1/)
+- [ZFS lz4 vs. zstd](https://www.reddit.com/r/zfs/comments/orzpuy/zstd_vs_lz4_for_nvme_ssds/)
+- [ZFS and zstd compression speeds](https://www.reddit.com/r/zfs/comments/sxx9p7/a_simple_real_world_zfs_compression_speed_an/)

@@ -1,0 +1,15 @@
+# See the source here
+# https://www.reddit.com/r/zfs/comments/mgibzy/comment/gsuzmxi/?utm_source=reddit&utm_medium=web2x&context=3
+[Unit]
+Description=Adjust ZFS Transaction Timeout Value
+After=zfs.target
+ConditionPathIsDirectory=/sys/module/zfs
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/bash -c 'echo 1 > /sys/module/zfs/parameters/zfs_txg_timeout'
+ExecStop=/usr/bin/bash -c 'echo 5 > /sys/module/zfs/parameters/zfs_txg_timeout'
+
+[Install]
+WantedBy=multi-user.target
