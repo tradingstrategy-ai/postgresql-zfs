@@ -270,6 +270,41 @@ Should print:
  timescaledb | 2.7.2   | public     | Enables scalable inserts and complex queries for time-series data
 ```
 
+## Disable PostgresSQL's internal TOAST compression
+
+There is no point to compress data twice.
+
+[From PSQL manual](https://www.postgresql.org/docs/current/storage-toast.htmlhttps://www.postgresql.org/docs/current/storage-toast.html):
+
+> Only certain data types support TOAST — there is no need to impose the overhead on data types that cannot produce large field values. To support TOAST, a data type must have a variable-length (varlena) representation, in which, ordinarily, the first four-byte word of any stored value contains the total length of the value in bytes (including itself). 
+
+TOAST compression mostly affects columns with values spawning more than 2 kilobytes.
+
+- JSONB
+- BYTEA
+- TEXT
+
+TOAST compression can be disabled
+
+- Per database
+- For each existing column
+- For not yet created columns by setting the column creation defaults
+
+[See dba.stackexchange.com post for discussion](https://dba.stackexchange.com/questions/315063/disable-toast-compression-for-all-columns/315067#315067).
+
+To make `EXTENDED` and `MAIN` column storage types to not compress data
+run the patch against chosen database before creating any new tables:
+
+```shell
+psql --host=localhost --username=postgres < toast-patch.sql
+```
+
+After the patch check that the database was correctly updated:
+
+```psql
+SELECT typname, typstorage FROM pg_catalog.pg_type;
+```
+
 # Other
 
 Use [btop++](https://github.com/aristocratos/btop) for monitoring.
