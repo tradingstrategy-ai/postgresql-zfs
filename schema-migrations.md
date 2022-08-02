@@ -36,22 +36,19 @@ if [ -z "$PROD_PASSWORD" ] ; then
   exit 1
 fi
 
-# Writes a change log file in liquibase internal XML format
+CHANGELOG_SQL="prod-changelog.sql"
+
+# Writes a change log file between two databases
+# in ALTER TABLE SQL format
 liquibase diff-changelog \
-  --changelog-file=prod-changelog.xml \
+  --changelog-file=$CHANGELOG_SQL \
   --reference-url="jdbc:postgresql://$PROD_HOST:$PROD_PORT/$PROD_DATABASE?user=$PROD_USER&password=$PROD_PASSWORD" \
   --url="jdbc:postgresql://$LOCAL_HOST:$LOCAL_PORT/$LOCAL_DATABASE?user=$LOCAL_USER&password=$LOCAL_PASSWORD"
 
-# Display changelog as SQL ALTER TABLE statements
-# https://stackoverflow.com/questions/28636472/get-the-output-sql-from-a-liquibase-changeset
-# https://docsstage.liquibase.com/commands/update/update-sql.html
-# Note that this requires database connection, because Liquibase needs to know the database
-# flavour
-# https://forum.liquibase.org/t/convert-changelog-xml-file-into-sql-file/1044/4
-liquibase update-sql \
-  --changelog-file=prod-changelog.xml \
-  --url="jdbc:postgresql://$LOCAL_HOST:$LOCAL_PORT/$LOCAL_DATABASE?user=$LOCAL_USER&password=$LOCAL_PASSWORD" \
-  > migrations.sql
+
+echo "See $CHANGELOG_SQL for details"
+
+
 ```
 
 Then manually clean up migrations.sql and hack pick statements.
