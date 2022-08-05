@@ -12,8 +12,8 @@ services:
 
   # Main database server for oracle and backend databases
   # https://hub.docker.com/r/timescale/timescaledb
-  timescaledb-prod:
-    container_name: timescaledb-prod
+  timescaledb-zfs:
+    container_name: timescaledb-zfs
     image: timescale/timescaledb:2.7.2-pg14
 
     # Assume firewalled + password POSTGRES_PASSWORD hardened
@@ -32,9 +32,13 @@ services:
       - -cmax_parallel_workers=128
       - -cmax_worker_processes=256
       - -cmax_connections=1024
-      - -cmax_pred_locks_per_transaction=512
-      - -cstatement_timeout=90min
       - -cmax_wal_size=4GB
+      # Note: Got one OperationalError: (psycopg2.errors.OutOfMemory) out of shared memory
+      # when doing parallel data import
+      - -cmax_pred_locks_per_transaction=2048
+      # Catch long running queries that should not be happening
+      - -cstatement_timeout=90min
+      # Catch leaking SQLAlchemt connections
       - -cidle_in_transaction_session_timeout=3600000
       # Because ZFS always writes full blocks, you can disable full page writes in PostgreSQL via full_page_writes = off setting
       # https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-postgresql-full-page-writes
@@ -42,8 +46,8 @@ services:
       # Runs on ZFS so not needed
       - -csynchronous_commit=off
       # Prefer ZFS ARC cache over shared_buffers
-      - https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-toast-compression
-      - -cshared_buffers=16G
+      # https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-toast-compression
+      - -cshared_buffers=20GB
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: dex_ohlcv

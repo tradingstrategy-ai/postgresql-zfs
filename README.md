@@ -173,6 +173,57 @@ large-storage-pool  compression           lz4                    local
 large-storage-pool  refcompressratio      1.00x                  -```
 ```
 
+## Setting ARC cache size
+
+ZFS is an advanced file system initially created by Sun Microsystems. ARC is an acronym for Adaptive Replacement Cache. It is a modern algorithm for caching data in DRAM. 
+
+[It is preferred to use ARC over PSQL shared buffers cache](https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#arc-and-shared-buffers) 
+because ARC 1) might be more efficient 2) can cache compressed pages.
+
+### Check ARC status
+
+```shell
+arcstat
+```
+
+Displays the current cache size (should be around ~50% of RAM):
+
+```shell
+arcstat
+    time  read  miss  miss%  dmis  dm%  pmis  pm%  mmis  mm%  size     c  avail
+12:37:19   124     0      0     0    0     0    0     0    0   39G   45G    53G
+```
+
+More ARC stats:
+
+```shell
+arc_summary | less
+```
+
+### Setting boot parameters
+
+You likely do not need to do this, unless you want to hand tune the server.
+
+ARC is a boot configuration parameter: Set up ARC by creating a modprobe config:
+
+```shell
+cp modprobe-zfs.conf /etc/modprobe.d/zfs.conf
+```
+
+Then regenerate Linux boot config.
+
+```shell
+sudo update-initramfs -u -k all
+```
+
+Then reboot
+
+```shell
+sudo reboot now
+```
+
+[See this tutorial for further information](https://www.cyberciti.biz/faq/how-to-set-up-zfs-arc-size-on-ubuntu-debian-linux/).
+
 # Setting up PostgreSQL (TimescaleDB) using Docker
 
 ## Install Docker
@@ -304,6 +355,18 @@ After the patch check that the database was correctly updated:
 ```psql
 SELECT typname, typstorage FROM pg_catalog.pg_type;
 ```
+
+# Maintenance
+
+Change parameters and restart
+
+Sync new `docker-compoer.yml` to the server. Then:
+
+```shell
+source ~/secrets.env  # Get POSTGRES_PASSWORD env
+docker compose up -d --force-recreate timescaledb-zfs
+```
+
 
 # Other
 
