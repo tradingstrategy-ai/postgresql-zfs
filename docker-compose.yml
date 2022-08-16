@@ -35,7 +35,7 @@ services:
       - -cmax_wal_size=4GB
       # Note: Got one OperationalError: (psycopg2.errors.OutOfMemory) out of shared memory
       # when doing parallel data import
-      - -cmax_pred_locks_per_transaction=2048
+      - -cmax_pred_locks_per_transaction=4096
       # Catch long running queries that should not be happening
       - -cstatement_timeout=90min
       # Catch leaking SQLAlchemt connections
@@ -47,7 +47,7 @@ services:
       - -csynchronous_commit=off
       # Prefer ZFS ARC cache over shared_buffers
       # https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-toast-compression
-      - -cshared_buffers=20GB
+      - -cshared_buffers=32GB
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: dex_ohlcv
@@ -57,5 +57,3 @@ services:
     volumes:
       - $PWD/data/:/var/lib/postgresql/data
       - $PWD/logs/:/var/log/timescaledb
-    #profiles:
-    #  - production

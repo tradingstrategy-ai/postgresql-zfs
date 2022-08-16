@@ -364,7 +364,8 @@ Sync new `docker-compoer.yml` to the server. Then:
 
 ```shell
 source ~/secrets.env  # Get POSTGRES_PASSWORD env
-docker compose up -d --force-recreate timescaledb-zfs
+# use docker compose stop for clean shutdown
+docker compose stop timescaledb-zfs && docker compose up -d --force-recreate timescaledb-zfs
 ```
 
 
