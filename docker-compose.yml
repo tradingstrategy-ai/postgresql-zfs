@@ -37,7 +37,7 @@ services:
       # when doing parallel data import
       - -cmax_pred_locks_per_transaction=4096
       # Catch long running queries that should not be happening
-      - -cstatement_timeout=90min
+      - -cstatement_timeout=180min
       # Catch leaking SQLAlchemt connections
       - -cidle_in_transaction_session_timeout=3600000
       # Because ZFS always writes full blocks, you can disable full page writes in PostgreSQL via full_page_writes = off setting
