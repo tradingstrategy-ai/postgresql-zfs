@@ -368,6 +368,21 @@ source ~/secrets.env  # Get POSTGRES_PASSWORD env
 docker compose stop timescaledb-zfs && docker compose up -d --force-recreate timescaledb-zfs
 ```
 
+# Backup
+## Create folder backup
+```
+mkdir -p /large-storage-pool/dump
+```
+## Sync backup script to the server
+
+We assume `backup.sh` is copied to `/large-storage-pool/`
+
+## Create crontab to backup weekly
+```
+crontab -e
+0 0 * * 6 /large-storage-pool/backup.sh
+```
+
 
 # Other
 
