@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/bin/bash
+set -e
 source ~/secrect.env
 NOW=$(date --iso-8601=minutes | sed 's/:/-/g' | cut -c 1-10)
 DELETE_OLDEST=$(date -d "$BACKUP_TIME ago" --iso-8601=minutes | sed 's/:/-/g' | cut -c 1-10)
@@ -16,4 +17,4 @@ sudo zfs destroy -v $ZFS_POOL_NAME/data@$DELETE_OLDEST && zfs destroy -v $ZFS_PO
 
 # Copy newly taken snapshot from remote server
 
-sudo zfs send $LAST_SNAPSHOT | ssh $BACKUP_SERVER sudo zfs receive -vF $BACKUP_DIRECTORY/data/data@$NOW
+sudo zfs send $LAST_SNAPSHOT | ssh -i $BACKUP_SSH_KEY  $BACKUP_USER@$BACKUP_SERVER  sudo zfs receive -vF $BACKUP_DIRECTORY/data/$NOW

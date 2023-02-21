@@ -7,16 +7,8 @@ export ZFS_POOL_NAME=
 export BACKUP_USER=
 export BACKUP_DIRECTORY=
 export BACKUP_SERVER=
-exoirt BACKUP_TIME=
-```
-
-## Create ssh config file 
-`vim ~/.ssh/config`
-```
-Host BACKUP_SERVER
-    HostName BACKUP_SERVER_IPADDRESS
-    User BACKUP_USER
-    IdentityFile  ~/.ssh/BACKUP_USER_PRIVATE_KEY
+export BACKUP_TIME=
+export BACKUP_SSH_KEY=
 ```
 
 ### Create zfs snapshot 
@@ -39,7 +31,7 @@ zfs allow $BACKUP_USER compression,mountpoint,create,mount,send,receive $BACKUP_
 
 ### zfs backup snapshot to another server
 ```
-sudo zfs send -cRi $LAST_SNAPSHOT $ZFS_POOL_NAME/data@$NOW" | ssh $BACKUP_SERVER sudo zfs receive -vF $BACKUP_DIRECTORY/data/data@$NOW 
+sudo zfs send $LAST_SNAPSHOT | ssh -i $BACKUP_SSH_KEY  $BACKUP_USER@$BACKUP_SERVER  sudo zfs receive -vF $BACKUP_DIRECTORY/data/$NOW
 ```
 
 ### Restore data from zfs snapshot
