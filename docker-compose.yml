@@ -14,7 +14,7 @@ services:
   # https://hub.docker.com/r/timescale/timescaledb
   timescaledb-zfs:
     container_name: timescaledb-zfs
-    image: timescale/timescaledb:2.7.2-pg14
+    image: timescale/timescaledb:2.19.1-pg14
 
     # Assume firewalled + password POSTGRES_PASSWORD hardened
     network_mode: host
@@ -28,10 +28,11 @@ services:
     # Default max_pred_locks_per_transaction=64
     # Make sure we do not have runaway queries by limiting the query time to 1h
     command:
-      - -ctimescaledb.max_background_workers=256
+      - -ctimescaledb.max_background_workers=128
       - -cmax_parallel_workers=128
       - -cmax_worker_processes=256
-      - -cmax_connections=1024
+      - -cmax_connections=3072  
+      #- -cmax_connections=1024
       - -cmax_wal_size=4GB
       # Note: Got one OperationalError: (psycopg2.errors.OutOfMemory) out of shared memory
       # when doing parallel data import
@@ -48,6 +49,12 @@ services:
       # Prefer ZFS ARC cache over shared_buffers
       # https://bun.uptrace.dev/postgres/tuning-zfs-aws-ebs.html#disabling-toast-compression
       - -cshared_buffers=32GB
+      # Enable stat_statements
+      #- -cshared_preload_libraries=timescaledb,pg_stat_statements
+      #- -ctrack_activity_query_size=4096
+      #- -ctrack_io_timing=on
+      #- -cpg_stat_statements.track=all
+      #- -cpg_stat_statements.max=10000
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: dex_ohlcv
