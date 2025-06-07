@@ -159,6 +159,27 @@ tmpfs                     13G     0   13G   0% /run/user/0
 large-storage-pool/data   14T  128K   14T   1% /large-storage-pool
 ```
 
+# Manually mounting and unmounting the file system
+
+Check status that all disks are connected
+
+```shell
+zpool status -v large-storage-pool
+```
+
+Unmount:
+
+```shell
+zfs umount large-storage-pool
+ls -lha /large-storage-pool/
+```
+
+Mount:
+
+```shell
+zfs mount large-storage-pool
+```
+
 # Checking the compress ratio
 
 Check that the compression is on and what is the compress ratio:
