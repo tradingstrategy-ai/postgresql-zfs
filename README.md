@@ -173,8 +173,14 @@ dd if=/dev/zero of=/large-storage-pool/testfile bs=1k count=1000
 
 Or with `fio`:
 
-```shlel
+```shell
 fio --name=write_test --filename=/large-storage-pool/testfile --rw=write --bs=1M --size=1G --numjobs=1 --iodepth=1 --runtime=60 --time_based --group_reporting --ioengine=posixaio
+```
+
+Then during `fio` run in another terminal:
+
+```shell
+zpool iostat -v large-storage-pool 2
 ```
 
 # Manually mounting and unmounting the file system
