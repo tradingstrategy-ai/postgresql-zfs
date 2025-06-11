@@ -159,6 +159,18 @@ tmpfs                     13G     0   13G   0% /run/user/0
 large-storage-pool/data   14T  128K   14T   1% /large-storage-pool
 ```
 
+After the file system is online, manually test its speed and record the value so you can later detect degration in the performance:
+
+```shell
+dd if=/dev/zero of=/large-storage-pool/testfile bs=1k count=1000
+```
+
+```
+1000+0 records in
+1000+0 records out
+1024000 bytes (1.0 MB, 1000 KiB) copied, 0.0206098 s, 49.7 MB/s
+```
+
 # Manually mounting and unmounting the file system
 
 Check status that all disks are connected
