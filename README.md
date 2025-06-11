@@ -161,6 +161,12 @@ large-storage-pool/data   14T  128K   14T   1% /large-storage-pool
 
 After the file system is online, manually test its speed and record the value so you can later detect degration in the performance:
 
+First write down version numbers as they may accidentally change in a kernel update:
+
+``shell
+zfs version
+```
+
 ```shell
 dd if=/dev/zero of=/large-storage-pool/testfile bs=1k count=1000
 ```
@@ -181,6 +187,18 @@ Then during `fio` run in another terminal:
 
 ```shell
 zpool iostat -v large-storage-pool 2
+```
+
+Another metric to confirm the IO speed is to run `scrub` command and monitor `issued at` in `zpool status`:
+
+```
+zpool status large-storage-pool
+  pool: large-storage-pool
+ state: ONLINE
+  scan: scrub in progress since Wed Jun 11 08:53:31 2025
+	1.93T scanned at 3.47G/s, 312G issued at 561M/s, 1.93T total
+	0B repaired, 15.80% done, 00:50:33 to go
+config:
 ```
 
 # Manually mounting and unmounting the file system
