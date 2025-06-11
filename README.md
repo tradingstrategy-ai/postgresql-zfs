@@ -163,7 +163,7 @@ After the file system is online, manually test its speed and record the value so
 
 First write down version numbers as they may accidentally change in a kernel update:
 
-``shell
+```shell
 zfs version
 ```
 
