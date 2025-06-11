@@ -219,7 +219,7 @@ ls -lha /large-storage-pool/
 Mount:
 
 ```shell
-zfs mount large-storage-pool
+zfs mount large-storage-pool/data
 ```
 
 # Checking the compress ratio
