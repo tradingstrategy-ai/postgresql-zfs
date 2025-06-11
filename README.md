@@ -171,6 +171,12 @@ dd if=/dev/zero of=/large-storage-pool/testfile bs=1k count=1000
 1024000 bytes (1.0 MB, 1000 KiB) copied, 0.0206098 s, 49.7 MB/s
 ```
 
+Or with `fio`:
+
+```shlel
+fio --name=write_test --filename=/large-storage-pool/testfile --rw=write --bs=1M --size=1G --numjobs=1 --iodepth=1 --runtime=60 --time_based --group_reporting --ioengine=posixaio
+```
+
 # Manually mounting and unmounting the file system
 
 Check status that all disks are connected
