@@ -431,6 +431,34 @@ source ~/secrets.env  # Get POSTGRES_PASSWORD env
 docker compose stop timescaledb-zfs && docker compose up -d --force-recreate timescaledb-zfs
 ```
 
+To see the real usage (uncompressed) of files:
+
+```shell
+zfs list -o name,used,logicalused,referenced,logicalreferenced,compressratio
+```
+
+This will show LUSED (Logical used) that is the size of the files if they were uncompresed:
+
+```
+NAME                      USED  LUSED     REFER  LREFER  RATIO
+large-storage-pool       1.96T  6.66T       96K     42K  3.41x
+large-storage-pool/data  1.96T  6.65T     1.14T   4.31T  3.41x
+```
+
+To see the disk usage of snapshots:
+
+```shell
+zfs list -r -o space
+```
+
+Gives you:
+
+```
+NAME                     AVAIL   USED  USEDSNAP  USEDDS  USEDREFRESERV  USEDCHILD
+large-storage-pool       11.9T  1.96T        0B     96K             0B      1.96T
+large-storage-pool/data  11.9T  1.96T      841G   1.14T             0B         0B
+```
+
 # Backup
 ## Create folder backup
 ```
