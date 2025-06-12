@@ -1,4 +1,4 @@
-# PostgreSQL (TimeScaleDB) + ZFS installation instructions
+# PostgreSQL (TimeScaleDB) + compressed ZFS/btrfs installation instructions
 
 These instructions are how to set up a large ZFS volume for PostgreSQL with compression.
 
@@ -201,7 +201,41 @@ zpool status large-storage-pool
 config:
 ```
 
-# Manually mounting and unmounting the file system
+# Setting up brtfs
+
+Using Hetzner's `installimage` just choose to create `/storage` partition with all existing space and btrfs file system.
+
+Do initial reboot, edit `/etc/fstab`, change `/storage` partition to use zstd:
+
+```
+/dev/sdX /mnt btrfs defaults,compress=zstd:3 0 2
+```
+
+Reboot again.
+
+Check with `mount`:
+
+```
+/dev/md4 on /storage type btrfs (rw,relatime,compress=zstd:3,ssd,discard=async,space_cache=v2,subvolid=5,subvol=/)
+binfmt_misc on /proc/sys/fs/binfmt_misc type binfmt_misc (rw,nosuid,nodev,noexec,relatime)
+tmpfs on /run/user/0 type tmpfs (rw,nosuid,nodev,relatime,size=13182216k,nr_inodes=3295554,mode=700,inode64)
+```
+
+Test write speed:
+
+```shell
+apt update
+apt install -y fio
+fio --name=write_test --filename=/storage/testfile --rw=write --bs=1M --size=1G --numjobs=1 --iodepth=1 --runtime=60 --time_based --group_reporting --ioengine=posixaio
+```
+
+You should see something like:
+
+```
+  write: IOPS=1000, BW=1001MiB/s (1049MB/s)(22.0GiB/22511msec); 0 zone resets
+```
+
+# Manually mounting and unmounting the ZFS file system
 
 Check status that all disks are connected
 
