@@ -1,0 +1,40 @@
+services:
+  timescaledb-zfs:
+    container_name: timescaledb-zfs
+    image: timescale/timescaledb:2.19.1-pg14
+
+    network_mode: host
+    shm_size: 1g
+
+    command:
+      - -ctimescaledb.max_background_workers=128
+      - -cmax_parallel_workers=128
+      - -cmax_worker_processes=256
+      - -cmax_connections=3072  
+      - -cmax_wal_size=4GB
+      - -cmax_pred_locks_per_transaction=4096
+      - -cstatement_timeout=180min
+      - -cidle_in_transaction_session_timeout=3600000
+      - -cfull_page_writes=off
+      - -csynchronous_commit=off
+      - -cshared_buffers=32GB
+
+      # --- Replication & WAL for ZFS snapshot ---
+      - -cwal_level=replica
+      - -cmax_wal_senders=10
+      - -cwal_keep_size=32GB     
+      - -chot_standby=on
+      - -carchive_mode=on
+      - -carchive_command=cp %p /var/lib/postgresql/wal_archive/%f
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dex_ohlcv
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+
+    ports:
+      - "5432:5432"
+    volumes:
+      - $PWD/data/:/var/lib/postgresql/data
+      - $PWD/logs/:/var/log/timescaledb
+      - $PWD/wal_archive/:/var/lib/postgresql/wal_archive 

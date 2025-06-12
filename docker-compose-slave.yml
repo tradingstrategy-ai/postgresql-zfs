@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  timescaledb-slave:
+    container_name: timescaledb-slave
+    image: timescale/timescaledb:2.19.1-pg14
+
+    network_mode: host
+    shm_size: 1g
+
+    command:
+      - -ctimescaledb.max_background_workers=128
+      - -cmax_parallel_workers=128
+      - -cmax_worker_processes=256
+      - -cmax_connections=3072  
+      - -cmax_wal_size=4GB
+      - -cmax_pred_locks_per_transaction=4096
+      - -cstatement_timeout=180min
+      - -cidle_in_transaction_session_timeout=3600000
+      - -cfull_page_writes=off
+      - -csynchronous_commit=off
+      - -cshared_buffers=32GB
+      # --- Replication/Read-only ---
+      - -chot_standby=on                    
+      - -cdefault_transaction_read_only=on  
+
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: dex_ohlcv
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+
+    ports:
+      - "5432:5432"
+    volumes:
+      - $PWD/data/:/var/lib/postgresql/data
+      - $PWD/logs/:/var/log/timescaledb
