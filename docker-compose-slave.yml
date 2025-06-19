@@ -20,6 +20,12 @@ services:
       - -cfull_page_writes=off
       - -csynchronous_commit=off
       - -cshared_buffers=32GB
+      # Enable stat_statements
+      - -cshared_preload_libraries=timescaledb,pg_stat_statements
+      - -ctrack_activity_query_size=4096
+      - -ctrack_io_timing=on
+      - -cpg_stat_statements.track=all
+      - -cpg_stat_statements.max=10000
       # --- Replication/Read-only ---
       - -chot_standby=on                    
       - -cdefault_transaction_read_only=on  

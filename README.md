@@ -1,4 +1,4 @@
-# PostgreSQL (TimeScaleDB) + ZFS installation instructions
+# PostgreSQL (TimeScaleDB) + compressed ZFS/btrfs installation instructions
 
 These instructions are how to set up a large ZFS volume for PostgreSQL with compression.
 
@@ -159,7 +159,102 @@ tmpfs                     13G     0   13G   0% /run/user/0
 large-storage-pool/data   14T  128K   14T   1% /large-storage-pool
 ```
 
-# Manually mounting and unmounting the file system
+After the file system is online, manually test its speed and record the value so you can later detect degration in the performance:
+
+First write down version numbers as they may accidentally change in a kernel update:
+
+```shell
+zfs version
+```
+
+```shell
+dd if=/dev/zero of=/large-storage-pool/testfile bs=1k count=1000
+```
+
+```
+1000+0 records in
+1000+0 records out
+1024000 bytes (1.0 MB, 1000 KiB) copied, 0.0206098 s, 49.7 MB/s
+```
+
+Or with `fio`:
+
+```shell
+fio --name=write_test --filename=/large-storage-pool/testfile --rw=write --bs=1M --size=1G --numjobs=1 --iodepth=1 --runtime=60 --time_based --group_reporting --ioengine=posixaio
+```
+
+Then during `fio` run in another terminal:
+
+```shell
+zpool iostat -v large-storage-pool 2
+```
+
+Another metric to confirm the IO speed is to run `scrub` command and monitor `issued at` in `zpool status`:
+
+```
+zpool status large-storage-pool
+  pool: large-storage-pool
+ state: ONLINE
+  scan: scrub in progress since Wed Jun 11 08:53:31 2025
+	1.93T scanned at 3.47G/s, 312G issued at 561M/s, 1.93T total
+	0B repaired, 15.80% done, 00:50:33 to go
+config:
+```
+
+# Setting up brtfs
+
+Using Hetzner's `installimage` just choose to create `/storage` partition with all existing space and btrfs file system.
+
+Do initial reboot, edit `/etc/fstab`, change `/storage` partition to use zstd:
+
+```
+/dev/sdX /mnt btrfs defaults,compress=zstd:3 0 2
+```
+
+Reboot again.
+
+Check with `mount`:
+
+```
+/dev/md4 on /storage type btrfs (rw,relatime,compress=zstd:3,ssd,discard=async,space_cache=v2,subvolid=5,subvol=/)
+binfmt_misc on /proc/sys/fs/binfmt_misc type binfmt_misc (rw,nosuid,nodev,noexec,relatime)
+tmpfs on /run/user/0 type tmpfs (rw,nosuid,nodev,relatime,size=13182216k,nr_inodes=3295554,mode=700,inode64)
+```
+
+Test write speed:
+
+```shell
+apt update
+apt install -y fio
+fio --name=write_test --filename=/storage/testfile --rw=write --bs=1M --size=1G --numjobs=1 --iodepth=1 --runtime=60 --time_based --group_reporting --ioengine=posixaio
+```
+
+You should see something like:
+
+```
+  write: IOPS=1000, BW=1001MiB/s (1049MB/s)(22.0GiB/22511msec); 0 zone resets
+```
+
+## # Btrfs checking the compress ratio
+### Install `compsize`
+```bash
+sudo apt install btrfs-compsize
+```
+Run compsize on your /storage directory to see the actual (compressed) disk usage versus the uncompressed size.
+```bash
+sudo compsize /storage
+```
+You should get something like:
+```
+Processed 36335 files, 40843427 regular extents (42872329 refs), 36 inline.
+Type       Perc     Disk Usage   Uncompressed Referenced  
+TOTAL       27%      1.2T         4.4T         4.3T       
+none       100%       90G          90G          85G       
+zstd        26%      1.1T         4.3T         4.2T   
+```
+
+
+# Manually mounting and unmounting the ZFS file system
 
 Check status that all disks are connected
 
@@ -177,10 +272,10 @@ ls -lha /large-storage-pool/
 Mount:
 
 ```shell
-zfs mount large-storage-pool
+zfs mount large-storage-pool/data
 ```
 
-# Checking the compress ratio
+# ZFS Checking the compress ratio
 
 Check that the compression is on and what is the compress ratio:
 
@@ -244,6 +339,7 @@ sudo reboot now
 ```
 
 [See this tutorial for further information](https://www.cyberciti.biz/faq/how-to-set-up-zfs-arc-size-on-ubuntu-debian-linux/).
+
 
 # Setting up PostgreSQL (TimescaleDB) using Docker
 
@@ -387,6 +483,34 @@ Sync new `docker-compoer.yml` to the server. Then:
 source ~/secrets.env  # Get POSTGRES_PASSWORD env
 # use docker compose stop for clean shutdown
 docker compose stop timescaledb-zfs && docker compose up -d --force-recreate timescaledb-zfs
+```
+
+To see the real usage (uncompressed) of files:
+
+```shell
+zfs list -o name,used,logicalused,referenced,logicalreferenced,compressratio
+```
+
+This will show LUSED (Logical used) that is the size of the files if they were uncompresed:
+
+```
+NAME                      USED  LUSED     REFER  LREFER  RATIO
+large-storage-pool       1.96T  6.66T       96K     42K  3.41x
+large-storage-pool/data  1.96T  6.65T     1.14T   4.31T  3.41x
+```
+
+To see the disk usage of snapshots:
+
+```shell
+zfs list -r -o space
+```
+
+Gives you:
+
+```
+NAME                     AVAIL   USED  USEDSNAP  USEDDS  USEDREFRESERV  USEDCHILD
+large-storage-pool       11.9T  1.96T        0B     96K             0B      1.96T
+large-storage-pool/data  11.9T  1.96T      841G   1.14T             0B         0B
 ```
 
 # Backup
