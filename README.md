@@ -1,4 +1,5 @@
 # PostgreSQL (TimeScaleDB) + compressed ZFS/btrfs installation instructions
+# PostgreSQL (TimeScaleDB) + compressed ZFS/btrfs installation instructions
 
 These instructions are how to set up a large ZFS volume for PostgreSQL with compression.
 
@@ -235,6 +236,25 @@ You should see something like:
   write: IOPS=1000, BW=1001MiB/s (1049MB/s)(22.0GiB/22511msec); 0 zone resets
 ```
 
+## Btrfs checking the compress ratio
+### Install `compsize`
+```bash
+sudo apt install btrfs-compsize
+```
+Run compsize on your /storage directory to see the actual (compressed) disk usage versus the uncompressed size.
+```bash
+sudo compsize /storage
+```
+You should get something like:
+```
+Processed 36335 files, 40843427 regular extents (42872329 refs), 36 inline.
+Type       Perc     Disk Usage   Uncompressed Referenced  
+TOTAL       27%      1.2T         4.4T         4.3T       
+none       100%       90G          90G          85G       
+zstd        26%      1.1T         4.3T         4.2T   
+```
+
+
 # Manually mounting and unmounting the ZFS file system
 
 Check status that all disks are connected
@@ -256,7 +276,7 @@ Mount:
 zfs mount large-storage-pool/data
 ```
 
-# Checking the compress ratio
+# ZFS Checking the compress ratio
 
 Check that the compression is on and what is the compress ratio:
 
@@ -320,6 +340,7 @@ sudo reboot now
 ```
 
 [See this tutorial for further information](https://www.cyberciti.biz/faq/how-to-set-up-zfs-arc-size-on-ubuntu-debian-linux/).
+
 
 # Setting up PostgreSQL (TimescaleDB) using Docker
 
@@ -463,6 +484,34 @@ Sync new `docker-compoer.yml` to the server. Then:
 source ~/secrets.env  # Get POSTGRES_PASSWORD env
 # use docker compose stop for clean shutdown
 docker compose stop timescaledb-zfs && docker compose up -d --force-recreate timescaledb-zfs
+```
+
+To see the real usage (uncompressed) of files:
+
+```shell
+zfs list -o name,used,logicalused,referenced,logicalreferenced,compressratio
+```
+
+This will show LUSED (Logical used) that is the size of the files if they were uncompresed:
+
+```
+NAME                      USED  LUSED     REFER  LREFER  RATIO
+large-storage-pool       1.96T  6.66T       96K     42K  3.41x
+large-storage-pool/data  1.96T  6.65T     1.14T   4.31T  3.41x
+```
+
+To see the disk usage of snapshots:
+
+```shell
+zfs list -r -o space
+```
+
+Gives you:
+
+```
+NAME                     AVAIL   USED  USEDSNAP  USEDDS  USEDREFRESERV  USEDCHILD
+large-storage-pool       11.9T  1.96T        0B     96K             0B      1.96T
+large-storage-pool/data  11.9T  1.96T      841G   1.14T             0B         0B
 ```
 
 To see the real usage (uncompressed) of files:
