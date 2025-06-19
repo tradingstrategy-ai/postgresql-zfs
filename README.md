@@ -235,7 +235,7 @@ You should see something like:
   write: IOPS=1000, BW=1001MiB/s (1049MB/s)(22.0GiB/22511msec); 0 zone resets
 ```
 
-## # Btrfs checking the compress ratio
+## Btrfs checking the compress ratio
 ### Install `compsize`
 ```bash
 sudo apt install btrfs-compsize
