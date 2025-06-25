@@ -1,5 +1,4 @@
 # PostgreSQL (TimeScaleDB) + compressed ZFS/btrfs installation instructions
-# PostgreSQL (TimeScaleDB) + compressed ZFS/btrfs installation instructions
 
 These instructions are how to set up a large ZFS volume for PostgreSQL with compression.
 
